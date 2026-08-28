@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GXB Tenant</title>
+  <style>
+    :root {
+      --accent: #1d4ed8;
+      --accent-soft: #dbeafe;
+      --bg: #f4f6f8;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --line: #e2e8f0;
+      --overdue: #b91c1c;
+      --current: #15803d;
+      --settled: #57534e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+    }
+    header {
+      background: var(--card);
+      border-bottom: 1px solid var(--line);
+      padding: 18px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+    }
+    .region {
+      color: var(--muted);
+      font-weight: 500;
+      font-size: 14px;
+    }
+    .status {
+      font-size: 13px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #fee2e2;
+      color: #991b1b;
+      white-space: nowrap;
+    }
+    .status.ok {
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .admin-link {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent);
+      text-decoration: none;
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      white-space: nowrap;
+    }
+    .admin-link:hover {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+    main {
+      max-width: 720px;
+      margin: 28px auto;
+      padding: 0 20px 40px;
+    }
+    .search-row {
+      display: flex;
+      gap: 8px;
+    }
+    input[type="search"] {
+      flex: 1;
+      padding: 12px 14px;
+      font-size: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      outline: none;
+    }
+    input[type="search"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+    button {
+      padding: 12px 18px;
+      font-size: 15px;
+      border: none;
+      border-radius: 8px;
+      background: var(--accent);
+      color: white;
+      cursor: pointer;
+    }
+    button.secondary {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+    .meta {
+      margin: 12px 0 18px;
+      color: var(--muted);
+      font-size: 13px;
+      min-height: 1.4em;
+    }
+    .count {
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+    .card:hover {
+      border-color: var(--accent);
+    }
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: baseline;
+    }
+    .name { font-weight: 650; }
+    .badge {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-weight: 700;
+    }
+    .badge.overdue { color: var(--overdue); }
+    .badge.current { color: var(--current); }
+    .badge.settled { color: var(--settled); }
+    .detail {
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 4px;
+    }
+    .empty {
+      color: var(--muted);
+      padding: 24px 0;
+    }
+    .hidden { display: none !important; }
+    .dl {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 8px 16px;
+      margin-top: 16px;
+    }
+    .dl dt { color: var(--muted); }
+    .dl dd { margin: 0; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>GXB Tenant</h1>
+      <div class="region">GXB</div>
+    </div>
+    <div class="header-actions">
+      <a class="admin-link" href="/admin" target="_blank" rel="noopener">Admin</a>
+      <div id="status" class="status">connecting…</div>
+    </div>
+  </header>
+  <main>
+    <section id="search-page">
+      <form id="search-form" class="search-row">
+        <input id="q" type="search" placeholder="Search name, account, city, status…" autocomplete="off">
+        <button type="submit">Search</button>
+      </form>
+      <p id="meta" class="meta"></p>
+      <div id="count" class="count"></div>
+      <div id="results"></div>
+    </section>
+    <section id="customer-page" class="hidden">
+      <button type="button" class="secondary" id="back-btn">Back to search</button>
+      <article class="card" id="customer-card" style="cursor: default; margin-top: 16px;"></article>
+    </section>
+  </main>
+  <script>
+    const APP = {
+      id: "gxb",
+      name: "GXB",
+      locale: "th-TH",
+      currency: "THB"
+    };
+  </script>
+  <script src="/operator.js"></script>
+</body>
+</html>

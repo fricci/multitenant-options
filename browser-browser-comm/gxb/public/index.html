@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GXB Tenant</title>
+  <style>
+    :root {
+      --accent: #1d4ed8;
+      --accent-soft: #dbeafe;
+      --bg: #f4f6f8;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --line: #e2e8f0;
+      --overdue: #b91c1c;
+      --current: #15803d;
+      --settled: #57534e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+    }
+    header {
+      background: var(--card);
+      border-bottom: 1px solid var(--line);
+      padding: 18px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+    }
+    .region {
+      color: var(--muted);
+      font-weight: 500;
+      font-size: 14px;
+    }
+    .status {
+      font-size: 13px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #fee2e2;
+      color: #991b1b;
+      white-space: nowrap;
+    }
+    .status.ok {
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .admin-link {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent);
+      text-decoration: none;
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      white-space: nowrap;
+    }
+    .admin-link:hover {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+    main {
+      max-width: 720px;
+      margin: 28px auto;
+      padding: 0 20px 40px;
+    }
+    .search-row {
+      display: flex;
+      gap: 8px;
+    }
+    input[type="search"] {
+      flex: 1;
+      padding: 12px 14px;
+      font-size: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      outline: none;
+    }
+    input[type="search"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+    button {
+      padding: 12px 18px;
+      font-size: 15px;
+      border: none;
+      border-radius: 8px;
+      background: var(--accent);
+      color: white;
+      cursor: pointer;
+    }
+    button.secondary {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+    .meta {
+      margin: 12px 0 18px;
+      color: var(--muted);
+      font-size: 13px;
+      min-height: 1.4em;
+    }
+    .count {
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+    .card:hover {
+      border-color: var(--accent);
+    }
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: baseline;
+    }
+    .name { font-weight: 650; }
+    .badge {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-weight: 700;
+    }
+    .badge.overdue { color: var(--overdue); }
+    .badge.current { color: var(--current); }
+    .badge.settled { color: var(--settled); }
+    .detail {
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 4px;
+    }
+    .empty {
+      color: var(--muted);
+      padding: 24px 0;
+    }
+    .hidden { display: none !important; }
+    .dl {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 8px 16px;
+      margin-top: 16px;
+    }
+    .dl dt { color: var(--muted); }
+    .dl dd { margin: 0; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>GXB Tenant</h1>
+      <div class="region">GXB Bank</div>
+    </div>
+    <div class="header-actions">
+      <a class="admin-link" href="/admin" target="_blank" rel="noopener">Admin</a>
+      <div id="status" class="status">connecting…</div>
+    </div>
+  </header>
+  <main>
+    <section id="search-page">
+      <form id="search-form" class="search-row">
+        <input id="q" type="search" placeholder="Search name, account, city, status…" autocomplete="off">
+        <button type="submit">Search</button>
+      </form>
+      <p id="meta" class="meta"></p>
+      <div id="count" class="count"></div>
+      <div id="results"></div>
+    </section>
+    <section id="customer-page" class="hidden">
+      <button type="button" class="secondary" id="back-btn">Back to search</button>
+      <article class="card" id="customer-card" style="cursor: default; margin-top: 16px;"></article>
+    </section>
+  </main>
+  <iframe id="intercom" style="display:none" title="intercom"></iframe>
+  <script>
+    const APP = {
+      id: "gxb",
+      name: "GXB",
+      locale: "th-TH",
+      currency: "THB"
+    };
+  </script>
+  <script>
+    const HUB_ORIGIN = "http://proxy.localtest.me:3010";
+    const iframe = document.getElementById("intercom");
+    const input = document.getElementById("q");
+    const resultsEl = document.getElementById("results");
+    const statusEl = document.getElementById("status");
+    const metaEl = document.getElementById("meta");
+    const countEl = document.getElementById("count");
+    const form = document.getElementById("search-form");
+    const searchPage = document.getElementById("search-page");
+    const customerPage = document.getElementById("customer-page");
+    const customerCard = document.getElementById("customer-card");
+    const backBtn = document.getElementById("back-btn");
+
+    const NAMES = { sgmy: "SGMY", gxb: "GXB", gxs: "GXS" };
+    const money = new Intl.NumberFormat(APP.locale, { style: "currency", currency: APP.currency });
+
+    const POLL_MS = 1000;
+
+    let RECORDS = [];
+    let lastCallId = 0;
+    let channelOk = true;
+    let hubReady = false;
+    let pendingQuery = null;
+    let debounceTimer = null;
+    let originalTitle = document.title;
+    let flashInterval = null;
+    let ringing = false;
+
+    function renderStatus() {
+      const label = hubReady ? "intercom connected" : "connecting…";
+      statusEl.textContent = channelOk ? label : `${label} · call channel offline`;
+      statusEl.classList.toggle("ok", hubReady && channelOk);
+    }
+
+    function setConnected(ok) {
+      hubReady = ok;
+      renderStatus();
+      if (ok && pendingQuery !== null) {
+        broadcastSearch(pendingQuery);
+        pendingQuery = null;
+      }
+    }
+
+    function pingHub() {
+      if (!iframe.contentWindow) return;
+      iframe.contentWindow.postMessage({ type: "hello", from: APP.id }, HUB_ORIGIN);
+    }
+
+    function broadcastSearch(query) {
+      if (!hubReady || !iframe.contentWindow) {
+        pendingQuery = query;
+        return;
+      }
+      iframe.contentWindow.postMessage(
+        { type: "search", query, from: APP.id },
+        HUB_ORIGIN
+      );
+    }
+
+    function searchRecords(query) {
+      const q = query.trim().toLowerCase();
+      if (!q) return [];
+      return RECORDS.filter((row) =>
+        Object.values(row).some((value) => String(value).toLowerCase().includes(q))
+      );
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function render(results, query, from) {
+      const trimmed = query.trim();
+      if (!trimmed) {
+        metaEl.textContent = "";
+        countEl.textContent = "";
+        resultsEl.innerHTML = '<p class="empty">Type a search to look up accounts in this tenant.</p>';
+        return;
+      }
+
+      const who = from === APP.id ? "You" : (NAMES[from] || from);
+      metaEl.textContent = `${who} searched “${trimmed}”`;
+      countEl.textContent = `${results.length} result${results.length === 1 ? "" : "s"}`;
+
+      if (!results.length) {
+        resultsEl.innerHTML = '<p class="empty">No matching accounts in this tenant.</p>';
+        return;
+      }
+
+      resultsEl.innerHTML = results.map((row) => `
+        <article class="card" data-account="${escapeHtml(row.account)}">
+          <div class="card-top">
+            <div class="name">${escapeHtml(row.name)}</div>
+            <div class="badge ${escapeHtml(row.status)}">${escapeHtml(row.status)}</div>
+          </div>
+          <div class="detail">${escapeHtml(row.account)} · ${escapeHtml(row.city)} · ${money.format(row.amount)}</div>
+          <div class="detail">${escapeHtml(row.product)}</div>
+        </article>
+      `).join("");
+    }
+
+    function isUnfocused() {
+      return document.hidden || !document.hasFocus();
+    }
+
+    function startFlashing(frames) {
+      stopFlashing();
+      let frame = 0;
+      document.title = frames[0];
+      flashInterval = setInterval(() => {
+        frame = 1 - frame;
+        document.title = frames[frame];
+      }, 500);
+    }
+
+    function stopFlashing() {
+      if (flashInterval) {
+        clearInterval(flashInterval);
+        flashInterval = null;
+      }
+      document.title = originalTitle;
+    }
+
+    function updateFlash(results) {
+      if (ringing) return;
+      if (results.length > 0 && isUnfocused()) {
+        const noun = results.length === 1 ? "result" : "results";
+        startFlashing([`🔴 ${results.length} ${noun} 🔴`, `🔔 ${results.length} ${noun} 🔔`]);
+      } else {
+        stopFlashing();
+      }
+    }
+
+    function clearCall() {
+      fetch("/api/clear-call", { method: "POST" }).catch(() => {
+        /* the next poll re-syncs */
+      });
+    }
+
+    function startCallFlash(row) {
+      ringing = true;
+      startFlashing(["🔴 Incoming call", `📞 ${row.name}`]);
+    }
+
+    function acknowledgeCall() {
+      if (!ringing) return;
+      ringing = false;
+      stopFlashing();
+      clearCall();
+    }
+
+    function showSearch() {
+      searchPage.classList.remove("hidden");
+      customerPage.classList.add("hidden");
+      acknowledgeCall();
+    }
+
+    function renderCustomer(row) {
+      customerCard.innerHTML = `
+        <div class="card-top">
+          <div class="name">${escapeHtml(row.name)}</div>
+          <div class="badge ${escapeHtml(row.status)}">${escapeHtml(row.status)}</div>
+        </div>
+        <dl class="dl">
+          <dt>Account</dt><dd>${escapeHtml(row.account)}</dd>
+          <dt>City</dt><dd>${escapeHtml(row.city)}</dd>
+          <dt>Product</dt><dd>${escapeHtml(row.product)}</dd>
+          <dt>Amount</dt><dd>${money.format(row.amount)}</dd>
+        </dl>
+      `;
+    }
+
+    function openCustomer(row, { incoming } = { incoming: false }) {
+      searchPage.classList.add("hidden");
+      customerPage.classList.remove("hidden");
+      renderCustomer(row);
+      if (incoming) {
+        startCallFlash(row);
+      } else {
+        acknowledgeCall();
+      }
+    }
+
+    function runSearch(query, { broadcast, from }) {
+      showSearch();
+      const results = searchRecords(query);
+      render(results, query, from);
+      if (broadcast) broadcastSearch(query);
+      updateFlash(results);
+    }
+
+    function handleIncomingCall(payload) {
+      const customer = payload && payload.customer;
+      if (!customer || !customer.account) return;
+      const row = RECORDS.find((item) => item.account === customer.account) || customer;
+      openCustomer(row, { incoming: true });
+    }
+
+    window.addEventListener("message", (event) => {
+      if (event.origin !== HUB_ORIGIN) return;
+      const data = event.data;
+      if (!data || typeof data !== "object") return;
+      if (data.type === "ready") {
+        setConnected(true);
+        return;
+      }
+      if (data.type === "search") {
+        if (data.from === APP.id) return;
+        input.value = data.query;
+        runSearch(data.query, { broadcast: false, from: data.from });
+      }
+    });
+
+    iframe.addEventListener("load", pingHub);
+    iframe.src = HUB_ORIGIN + "/";
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) return;
+      if (ringing) acknowledgeCall();
+      else stopFlashing();
+    });
+
+    window.addEventListener("focus", () => {
+      if (ringing) acknowledgeCall();
+      else stopFlashing();
+    });
+
+    window.addEventListener("pointerdown", acknowledgeCall);
+    window.addEventListener("keydown", acknowledgeCall);
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      clearTimeout(debounceTimer);
+      runSearch(input.value, { broadcast: true, from: APP.id });
+    });
+
+    input.addEventListener("input", () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        runSearch(input.value, { broadcast: true, from: APP.id });
+      }, 300);
+    });
+
+    resultsEl.addEventListener("click", (event) => {
+      const card = event.target.closest("[data-account]");
+      if (!card) return;
+      const row = RECORDS.find((item) => item.account === card.dataset.account);
+      if (row) openCustomer(row, { incoming: false });
+    });
+
+    backBtn.addEventListener("click", () => {
+      showSearch();
+      render(searchRecords(input.value), input.value, APP.id);
+    });
+
+    async function pollCurrentCall() {
+      try {
+        const res = await fetch("/api/current-call", { cache: "no-store" });
+        const body = await res.json();
+        const call = body && body.call;
+        channelOk = true;
+        renderStatus();
+        if (call && call.id > lastCallId) {
+          lastCallId = call.id;
+          handleIncomingCall(call);
+        } else if (!call && ringing) {
+          ringing = false;
+          stopFlashing();
+        }
+      } catch {
+        channelOk = false;
+        renderStatus();
+      }
+    }
+
+    fetch("/api/customers")
+      .then((res) => res.json())
+      .then((rows) => {
+        RECORDS = Array.isArray(rows) ? rows : [];
+      })
+      .catch(() => {
+        /* search stays empty; the customer detail view still works from the call payload */
+      })
+      .finally(() => {
+        render([], "", APP.id);
+        pollCurrentCall();
+        setInterval(pollCurrentCall, POLL_MS);
+      });
+  </script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Intercom hub</title>
+</head>
+<body>
+<script>
+  const channel = new BroadcastChannel("tenant-intercom");
+
+  function isAllowedOrigin(origin) {
+    try {
+      const host = new URL(origin).hostname;
+      return host === "localtest.me" || host.endsWith(".localtest.me");
+    } catch {
+      return false;
+    }
+  }
+
+  function parentOrigin() {
+    try {
+      return new URL(document.referrer).origin;
+    } catch {
+      return "*";
+    }
+  }
+
+  function notifyReady(target, origin) {
+    const dest = target || window.parent;
+    const orig = origin || parentOrigin();
+    if (dest && dest !== window) {
+      dest.postMessage({ type: "ready" }, orig);
+    }
+  }
+
+  channel.onmessage = (event) => {
+    const data = event.data;
+    if (!data || data.type !== "search") return;
+    notifyParent(data);
+  };
+
+  function notifyParent(data) {
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage(data, parentOrigin());
+    }
+  }
+
+  window.addEventListener("message", (event) => {
+    if (!isAllowedOrigin(event.origin)) return;
+    const data = event.data;
+    if (!data || typeof data !== "object") return;
+
+    if (data.type === "hello") {
+      notifyReady(event.source, event.origin);
+      return;
+    }
+
+    if (data.type === "search") {
+      channel.postMessage({
+        type: "search",
+        query: String(data.query ?? ""),
+        from: String(data.from ?? "")
+      });
+    }
+  });
+
+  notifyReady();
+</script>
+</body>
+</html>

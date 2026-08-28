@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GXS admin</title>
+  <style>
+    :root {
+      --accent: #b45309;
+      --accent-soft: #ffedd5;
+      --bg: #f4f6f8;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --line: #e2e8f0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+    }
+    header {
+      background: var(--card);
+      border-bottom: 1px solid var(--line);
+      padding: 18px 24px;
+    }
+    h1 { margin: 0; font-size: 20px; }
+    .region { color: var(--muted); font-size: 14px; }
+    main { max-width: 520px; margin: 28px auto; padding: 0 20px 40px; }
+    label { display: block; font-weight: 600; margin-bottom: 8px; }
+    select, button {
+      width: 100%;
+      padding: 12px 14px;
+      font-size: 15px;
+      border-radius: 8px;
+    }
+    select {
+      border: 1px solid var(--line);
+      margin-bottom: 14px;
+      background: white;
+    }
+    button {
+      border: none;
+      background: var(--accent);
+      color: white;
+      cursor: pointer;
+    }
+    .msg { margin-top: 14px; color: var(--muted); min-height: 1.4em; }
+    .msg.err { color: #b91c1c; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>GXS admin</h1>
+    <div class="region">Trigger an incoming call on the operator tab</div>
+  </header>
+  <main>
+    <form id="call-form">
+      <label for="account">Customer</label>
+      <select id="account" required></select>
+      <button type="submit">Incoming call</button>
+    </form>
+    <p id="msg" class="msg"></p>
+  </main>
+  <script>
+    const accountEl = document.getElementById("account");
+    const form = document.getElementById("call-form");
+    const msg = document.getElementById("msg");
+
+    fetch("/api/customers")
+      .then((res) => res.json())
+      .then((rows) => {
+        accountEl.innerHTML = (rows || []).map((row) =>
+          `<option value="${row.account}">${row.name} · ${row.account}</option>`
+        ).join("");
+      })
+      .catch(() => {
+        msg.classList.add("err");
+        msg.textContent = "Could not load customers.";
+      });
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      msg.classList.remove("err");
+      msg.textContent = "Sending…";
+      try {
+        const res = await fetch("/api/incoming-call", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ account: accountEl.value })
+        });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(body.message || res.statusText);
+        }
+        msg.textContent = `Ringing ${body.call?.customer?.name || accountEl.value}.`;
+      } catch (err) {
+        msg.classList.add("err");
+        msg.textContent = err.message || "Failed to send incoming call.";
+      }
+    });
+  </script>
+</body>
+</html>

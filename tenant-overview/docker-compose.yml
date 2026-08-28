@@ -1,0 +1,32 @@
+services:
+  sgmy:
+    build: ./sgmy
+    ports:
+      - "3101:3101"
+    environment:
+      PORT: "3101"
+    volumes:
+      - ./sgmy/public:/app/public:ro
+
+  gxb:
+    build: ./gxb
+    ports:
+      - "3102:3102"
+    environment:
+      PORT: "3102"
+    volumes:
+      - ./gxb/public:/app/public:ro
+
+  gxs:
+    build: ./gxs
+    ports:
+      - "3103:3103"
+    environment:
+      PORT: "3103"
+    volumes:
+      - ./gxs/public:/app/public:ro
+
+  proxy:
+    build: ./proxy
+    ports:
+      - "3110:80"

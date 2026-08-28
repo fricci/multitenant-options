@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tenant Overview</title>
+  <style>
+    :root {
+      --bg: #f4f6f8;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --line: #e2e8f0;
+      --call: #b91c1c;
+      --hits: #ca8a04;
+      --hits-bg: #fef08a;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      height: 100%;
+    }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+      display: flex;
+      flex-direction: column;
+    }
+    .topbar {
+      flex: 0 0 auto;
+      background: var(--card);
+      border-bottom: 1px solid var(--line);
+      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: nowrap;
+      min-height: 0;
+    }
+    .brand {
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .search-row {
+      display: flex;
+      gap: 6px;
+      flex: 1 1 220px;
+      min-width: 160px;
+      max-width: 420px;
+    }
+    input[type="search"] {
+      flex: 1;
+      padding: 5px 9px;
+      font-size: 13px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      outline: none;
+      min-width: 0;
+    }
+    input[type="search"]:focus {
+      border-color: #0f172a;
+      box-shadow: 0 0 0 2px #e2e8f0;
+    }
+    button {
+      padding: 5px 12px;
+      font-size: 13px;
+      border: none;
+      border-radius: 6px;
+      background: #0f172a;
+      color: white;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .tabs {
+      display: flex;
+      gap: 6px;
+      margin-left: auto;
+      flex: 0 1 auto;
+      min-width: 0;
+      overflow-x: auto;
+    }
+    .tab {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 2px solid var(--line);
+      background: #f1f5f9;
+      color: #94a3b8;
+      filter: grayscale(0.7);
+      opacity: 0.45;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: opacity 0.15s ease, filter 0.15s ease;
+    }
+    .tab .tab-name {
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .tab .tab-meta {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+    .tab .tab-meta:empty { display: none; }
+    .cue {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      padding: 1px 6px;
+      border-radius: 999px;
+    }
+    .count-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: #e2e8f0;
+      color: #334155;
+    }
+    .tab.active {
+      opacity: 1;
+      filter: none;
+      color: white;
+      border-color: transparent;
+      box-shadow: 0 0 0 2px #0f172a;
+    }
+    .tab.active .cue.viewing {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+    }
+    .tab[data-tenant="sgmy"].active { background: #0f766e; }
+    .tab[data-tenant="gxb"].active { background: #1d4ed8; }
+    .tab[data-tenant="gxs"].active { background: #b45309; }
+    .tab.ringing {
+      opacity: 1;
+      filter: none;
+      border-color: var(--call);
+      color: var(--call);
+      background: #fef2f2;
+      animation: callPulse 1s ease-in-out infinite;
+    }
+    .tab.ringing .cue.call {
+      background: var(--call);
+      color: white;
+    }
+    .tab.active.ringing {
+      color: white;
+    }
+    .tab.active.ringing .cue.call {
+      background: white;
+      color: var(--call);
+    }
+    .tab.has-hits:not(.active) {
+      opacity: 1;
+      filter: none;
+      color: var(--text);
+      background: var(--hits-bg);
+      border-color: var(--hits);
+      box-shadow: 0 0 0 2px var(--hits);
+    }
+    .tab.has-hits:not(.active) .count-badge {
+      background: var(--hits);
+      color: white;
+    }
+    .tab.inactive {
+      cursor: pointer;
+    }
+    @keyframes callPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(185, 28, 28, 0.55); }
+      50% { box-shadow: 0 0 0 5px rgba(185, 28, 28, 0); }
+    }
+    .frames {
+      position: relative;
+      flex: 1 1 auto;
+      min-height: 0;
+      margin: 0;
+      border: 0;
+      overflow: hidden;
+      background: var(--card);
+    }
+    iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: var(--card);
+    }
+    iframe.idle {
+      visibility: hidden;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Tenant Overview</div>
+    <form id="search-form" class="search-row">
+      <input id="q" type="search" placeholder="Search all tenants…" autocomplete="off">
+      <button type="submit">Search</button>
+    </form>
+    <nav class="tabs" id="tabs"></nav>
+  </header>
+  <section class="frames" id="frames"></section>
+  <script>
+    const TENANTS = [
+      { id: "sgmy", name: "SGMY", origin: "http://sgmy.localtest.me:3101" },
+      { id: "gxb", name: "GXB", origin: "http://gxb.localtest.me:3102" },
+      { id: "gxs", name: "GXS", origin: "http://gxs.localtest.me:3103" }
+    ];
+    const ORDER = TENANTS.map((tenant) => tenant.id);
+    const TITLE = "Tenant Overview";
+    const SEARCH_WAIT_MS = 2500;
+
+    const form = document.getElementById("search-form");
+    const input = document.getElementById("q");
+    const tabsEl = document.getElementById("tabs");
+    const framesEl = document.getElementById("frames");
+
+    const state = {
+      focused: "sgmy",
+      ringing: { sgmy: false, gxb: false, gxs: false },
+      counts: { sgmy: null, gxb: null, gxs: null },
+      searchId: null,
+      received: {}
+    };
+    let selectTimer = null;
+
+    function tenantByOrigin(origin) {
+      return TENANTS.find((tenant) => tenant.origin === origin);
+    }
+
+    function renderTabs() {
+      tabsEl.innerHTML = TENANTS.map((tenant) => {
+        const focused = state.focused === tenant.id;
+        const ringing = state.ringing[tenant.id];
+        const count = state.counts[tenant.id];
+        const hasHits = Number(count) > 0 && !focused;
+        const inactive = !focused && !ringing && !hasHits;
+        const classes = ["tab"];
+        if (focused) classes.push("active");
+        if (ringing) classes.push("ringing");
+        if (hasHits) classes.push("has-hits");
+        if (inactive) classes.push("inactive");
+        const countLabel = count == null ? "" : `<span class="count-badge">${count} hit${count === 1 ? "" : "s"}</span>`;
+        const viewing = focused ? '<span class="cue viewing">Viewing</span>' : "";
+        const call = ringing ? '<span class="cue call">Incoming call</span>' : "";
+        return `
+          <button type="button" class="${classes.join(" ")}" data-tenant="${tenant.id}">
+            <span class="tab-name">${tenant.name}</span>
+            <span class="tab-meta">${viewing}${call}${countLabel}</span>
+          </button>
+        `;
+      }).join("");
+    }
+
+    function showTenant(id) {
+      state.focused = id;
+      TENANTS.forEach((tenant) => {
+        const frame = document.getElementById(`frame-${tenant.id}`);
+        frame.classList.toggle("idle", tenant.id !== id);
+      });
+      renderTabs();
+    }
+
+    function applySearchSelection() {
+      const hits = ORDER.filter((id) => Number(state.counts[id]) > 0);
+      if (hits.length) showTenant(hits[0]);
+      else renderTabs();
+    }
+
+    function startSearch(query) {
+      const trimmed = query.trim();
+      const searchId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      state.searchId = searchId;
+      state.received = {};
+      state.counts = { sgmy: null, gxb: null, gxs: null };
+      renderTabs();
+      TENANTS.forEach((tenant) => {
+        const url = new URL("/search", tenant.origin);
+        url.searchParams.set("q", trimmed);
+        url.searchParams.set("sid", searchId);
+        document.getElementById(`frame-${tenant.id}`).src = url.toString();
+      });
+      clearTimeout(selectTimer);
+      selectTimer = setTimeout(applySearchSelection, SEARCH_WAIT_MS);
+    }
+
+    TENANTS.forEach((tenant) => {
+      const iframe = document.createElement("iframe");
+      iframe.id = `frame-${tenant.id}`;
+      iframe.title = `${tenant.name} tenant`;
+      iframe.src = `${tenant.origin}/`;
+      if (tenant.id !== state.focused) iframe.classList.add("idle");
+      framesEl.appendChild(iframe);
+    });
+
+    renderTabs();
+    document.title = TITLE;
+
+    tabsEl.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-tenant]");
+      if (!button) return;
+      showTenant(button.dataset.tenant);
+    });
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      startSearch(input.value);
+    });
+
+    window.addEventListener("message", (event) => {
+      const tenant = tenantByOrigin(event.origin);
+      if (!tenant) return;
+      const data = event.data;
+      if (!data || typeof data !== "object" || data.tenant !== tenant.id) return;
+
+      if (data.type === "search-results") {
+        if (!state.searchId || data.searchId !== state.searchId) return;
+        state.counts[tenant.id] = Number(data.count) || 0;
+        state.received[tenant.id] = true;
+        renderTabs();
+        if (ORDER.every((id) => state.received[id])) {
+          clearTimeout(selectTimer);
+          applySearchSelection();
+        }
+        return;
+      }
+
+      if (data.type === "incoming-call") {
+        state.ringing[tenant.id] = true;
+        showTenant(tenant.id);
+        return;
+      }
+
+      if (data.type === "call-cleared") {
+        state.ringing[tenant.id] = false;
+        renderTabs();
+      }
+    });
+  </script>
+</body>
+</html>
