@@ -3,203 +3,135 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GXS Tenant</title>
-  <style>
-    :root {
-      --accent: #b45309;
-      --accent-soft: #ffedd5;
-      --bg: #f4f6f8;
-      --card: #ffffff;
-      --text: #0f172a;
-      --muted: #64748b;
-      --line: #e2e8f0;
-      --overdue: #b91c1c;
-      --current: #15803d;
-      --settled: #57534e;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.45;
-    }
-    header {
-      background: var(--card);
-      border-bottom: 1px solid var(--line);
-      padding: 18px 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
-    }
-    h1 {
-      margin: 0;
-      font-size: 20px;
-    }
-    .region {
-      color: var(--muted);
-      font-weight: 500;
-      font-size: 14px;
-    }
-    .status {
-      font-size: 13px;
-      padding: 6px 10px;
-      border-radius: 999px;
-      background: #fee2e2;
-      color: #991b1b;
-      white-space: nowrap;
-    }
-    .status.ok {
-      background: var(--accent-soft);
-      color: var(--accent);
-    }
-    .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .admin-link {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--accent);
-      text-decoration: none;
-      padding: 6px 10px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      white-space: nowrap;
-    }
-    .admin-link:hover {
-      border-color: var(--accent);
-      background: var(--accent-soft);
-    }
-    main {
-      max-width: 720px;
-      margin: 28px auto;
-      padding: 0 20px 40px;
-    }
-    .search-row {
-      display: flex;
-      gap: 8px;
-    }
-    input[type="search"] {
-      flex: 1;
-      padding: 12px 14px;
-      font-size: 16px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      outline: none;
-    }
-    input[type="search"]:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px var(--accent-soft);
-    }
-    button {
-      padding: 12px 18px;
-      font-size: 15px;
-      border: none;
-      border-radius: 8px;
-      background: var(--accent);
-      color: white;
-      cursor: pointer;
-    }
-    button.secondary {
-      background: var(--card);
-      color: var(--text);
-      border: 1px solid var(--line);
-    }
-    .meta {
-      margin: 12px 0 18px;
-      color: var(--muted);
-      font-size: 13px;
-      min-height: 1.4em;
-    }
-    .count {
-      font-weight: 600;
-      margin-bottom: 10px;
-    }
-    .card {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 14px 16px;
-      margin-bottom: 10px;
-      cursor: pointer;
-    }
-    .card:hover {
-      border-color: var(--accent);
-    }
-    .card-top {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      align-items: baseline;
-    }
-    .name { font-weight: 650; }
-    .badge {
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      font-weight: 700;
-    }
-    .badge.overdue { color: var(--overdue); }
-    .badge.current { color: var(--current); }
-    .badge.settled { color: var(--settled); }
-    .detail {
-      color: var(--muted);
-      font-size: 14px;
-      margin-top: 4px;
-    }
-    .empty {
-      color: var(--muted);
-      padding: 24px 0;
-    }
-    .hidden { display: none !important; }
-    .dl {
-      display: grid;
-      grid-template-columns: 140px 1fr;
-      gap: 8px 16px;
-      margin-top: 16px;
-    }
-    .dl dt { color: var(--muted); }
-    .dl dd { margin: 0; font-weight: 600; }
-  </style>
+  <title>GXS collections console</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='16' fill='%23b45309'/><text x='16' y='21' font-family='system-ui' font-size='13' font-weight='700' fill='white' text-anchor='middle'>GS</text></svg>">
+  <link rel="stylesheet" href="/app.css">
 </head>
-<body>
-  <header>
-    <div>
-      <h1>GXS Tenant</h1>
-      <div class="region">GXS</div>
+<body data-tenant="gxs" data-view="search">
+  <svg class="sprite" aria-hidden="true">
+    <symbol id="i-gauge" viewBox="0 0 24 24"><path d="M3.5 17.5a9 9 0 1 1 17 0"/><path d="M12 17l4.2-5.4"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M15.5 15.5 20 20"/></symbol>
+    <symbol id="i-clip" viewBox="0 0 24 24"><path d="M17.5 8.5l-6.8 6.8a2.4 2.4 0 0 0 3.4 3.4l7-7a5 5 0 0 0-7-7l-7.4 7.4a7.4 7.4 0 0 0 10.4 10.4"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 15.5V10a6 6 0 1 0-12 0v5.5L4.5 18h15z"/><path d="M10 21h4"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5.5 20c1.4-3.8 11.6-3.8 13 0"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="4" y="5.5" width="16" height="14.5" rx="2.2"/><path d="M4 10.5h16M8.5 3.5v4M15.5 3.5v4"/></symbol>
+    <symbol id="i-flow" viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.4"/><circle cx="18" cy="18" r="2.4"/><path d="M6 8.4V15a3 3 0 0 0 3 3h6.6"/></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-8.5 8.5"/><path d="M19.5 14.5V18a2.5 2.5 0 0 1-2.5 2.5H7A2.5 2.5 0 0 1 4.5 18V8A2.5 2.5 0 0 1 7 5.5h3.5"/></symbol>
+    <symbol id="i-sort" viewBox="0 0 24 24"><path d="M4 7h12M4 12h8M4 17h5"/><path d="M18.5 9.5v9M15.5 15.5l3 3 3-3"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s7-6.6 7-11.2A7 7 0 1 0 5 9.8C5 14.4 12 21 12 21z"/><circle cx="12" cy="9.8" r="2.4"/></symbol>
+    <symbol id="i-card" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2.4"/><path d="M3 11h18"/></symbol>
+    <symbol id="i-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 7.5v9M9.5 10h5M9.5 14h5"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><path d="M6.5 3H9l2 5-2.2 1.6a11.5 11.5 0 0 0 5.6 5.6L16 13l5 2v3.2A2.3 2.3 0 0 1 18.5 20.5A16.5 16.5 0 0 1 3.5 5.5A2.3 2.3 0 0 1 6.5 3z"/></symbol>
+  </svg>
+
+  <div class="shell">
+    <aside class="rail">
+      <div class="brand-mark">GS</div>
+      <button type="button" class="rail-btn on" data-action="dashboard" title="CC dashboard">
+        <svg class="ic"><use href="#i-gauge"></use></svg>
+      </button>
+      <button type="button" class="rail-btn" data-action="dashboard" title="Find customer">
+        <svg class="ic"><use href="#i-search"></use></svg>
+      </button>
+      <button type="button" class="rail-btn" title="Documents">
+        <svg class="ic"><use href="#i-clip"></use></svg>
+      </button>
+      <div class="rail-sep"></div>
+      <button type="button" class="rail-btn" title="Call task list">
+        <svg class="ic"><use href="#i-list"></use></svg>
+      </button>
+      <div class="rail-sep"></div>
+      <button type="button" class="rail-btn" title="Notifications">
+        <svg class="ic"><use href="#i-bell"></use></svg>
+      </button>
+      <div class="rail-user">
+        <div class="avatar">CC</div>
+        <div class="rail-user-name">ccoperator1</div>
+        <div class="rail-clock" id="clock">30:00</div>
+      </div>
+    </aside>
+
+    <aside class="subnav">
+      <button type="button" class="nav-item on">
+        <svg class="ic sm"><use href="#i-user"></use></svg> Customer 360
+      </button>
+      <button type="button" class="nav-sub">Willingness</button>
+      <button type="button" class="nav-sub">Affordability</button>
+      <button type="button" class="nav-sub">Risk</button>
+      <button type="button" class="nav-sub">Upcoming payments</button>
+      <div class="nav-sep"></div>
+      <button type="button" class="nav-item">
+        <svg class="ic sm"><use href="#i-phone"></use></svg> Contacts
+      </button>
+      <button type="button" class="nav-item">
+        <svg class="ic sm"><use href="#i-calendar"></use></svg> Calendar
+      </button>
+      <button type="button" class="nav-item">
+        <svg class="ic sm"><use href="#i-flow"></use></svg> Workflows
+      </button>
+    </aside>
+
+    <div class="workspace">
+      <header class="page-head">
+        <div class="page-title">
+          <svg class="ic"><use href="#i-user"></use></svg>
+          <span id="page-title">CC dashboard</span>
+        </div>
+        <div class="head-right">
+          <button type="button" id="back-btn" class="btn-ghost only-customer" data-action="dashboard">
+            <svg class="ic sm"><use href="#i-gauge"></use></svg> CC dashboard
+          </button>
+          <a class="link-admin" href="/admin" target="_blank" rel="noopener">Admin</a>
+          <div id="status" class="pill">connecting…</div>
+        </div>
+      </header>
+
+      <section id="search-page">
+        <div class="dash-grid">
+          <section class="card">
+            <h2 class="card-title">Find customer</h2>
+            <form id="search-form">
+              <label class="field-hint" for="q">Call task ID / Customer's name, ID, city or product</label>
+              <div class="search-row">
+                <input id="q" type="search" autocomplete="off" placeholder="overdue, Manila, PH-30001…">
+                <button type="submit" class="btn-search">Search</button>
+              </div>
+            </form>
+            <p id="meta" class="meta"></p>
+            <div class="task-panel">
+              <div class="task-panel-title" id="count">Customer call task list</div>
+              <div id="results"></div>
+            </div>
+          </section>
+
+          <section class="card">
+            <h2 class="card-title">Current and upcoming tasks <span class="spacer"></span>
+              <button type="button" class="icon-btn" title="Sort tasks">
+                <svg class="ic"><use href="#i-sort"></use></svg>
+              </button>
+            </h2>
+            <div class="empty-panel">There is no task to display</div>
+          </section>
+        </div>
+      </section>
+
+      <section id="customer-page" class="hidden">
+        <div class="c360" id="customer-card"></div>
+      </section>
     </div>
-    <div class="header-actions">
-      <a class="admin-link" href="/admin" target="_blank" rel="noopener">Admin</a>
-      <div id="status" class="status">connecting…</div>
-    </div>
-  </header>
-  <main>
-    <section id="search-page">
-      <form id="search-form" class="search-row">
-        <input id="q" type="search" placeholder="Search name, account, city, status…" autocomplete="off">
-        <button type="submit">Search</button>
-      </form>
-      <p id="meta" class="meta"></p>
-      <div id="count" class="count"></div>
-      <div id="results"></div>
-    </section>
-    <section id="customer-page" class="hidden">
-      <button type="button" class="secondary" id="back-btn">Back to search</button>
-      <article class="card" id="customer-card" style="cursor: default; margin-top: 16px;"></article>
-    </section>
-  </main>
+  </div>
+
   <script>
     const APP = {
       id: "gxs",
       name: "GXS",
       locale: "en-PH",
-      currency: "PHP"
+      currency: "PHP",
+      country: "Philippines"
     };
   </script>
+  <script src="/ui.js"></script>
   <script src="/operator.js"></script>
 </body>
 </html>

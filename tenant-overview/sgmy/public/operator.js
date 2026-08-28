@@ -10,9 +10,10 @@ const form = document.getElementById("search-form");
 const searchPage = document.getElementById("search-page");
 const customerPage = document.getElementById("customer-page");
 const customerCard = document.getElementById("customer-card");
-const backBtn = document.getElementById("back-btn");
+const pageTitle = document.getElementById("page-title");
 
-const money = new Intl.NumberFormat(APP.locale, { style: "currency", currency: APP.currency });
+const DASH_TITLE = "CC dashboard";
+const clock = UI.clock(document.getElementById("clock"));
 const POLL_MS = 1000;
 
 let RECORDS = [];
@@ -73,41 +74,24 @@ function searchRecords(query) {
   );
 }
 
-function escapeHtml(value) {
-  return String(value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
 function render(results, query) {
   const trimmed = query.trim();
   if (!trimmed) {
     metaEl.textContent = "";
-    countEl.textContent = "";
-    resultsEl.innerHTML = '<p class="empty">Type a search to look up accounts in this tenant.</p>';
+    countEl.textContent = "Customer call task list";
+    resultsEl.innerHTML = '<p class="empty">Search a call task ID, name, ID, city or product to build the task list.</p>';
     return;
   }
 
   metaEl.textContent = `${APP.name} searched “${trimmed}”`;
-  countEl.textContent = `${results.length} result${results.length === 1 ? "" : "s"}`;
+  countEl.textContent = `Customer call task list (${results.length})`;
 
   if (!results.length) {
-    resultsEl.innerHTML = '<p class="empty">No matching accounts in this tenant.</p>';
+    resultsEl.innerHTML = '<p class="empty">No matching call tasks in this tenant.</p>';
     return;
   }
 
-  resultsEl.innerHTML = results.map((row) => `
-    <article class="card" data-account="${escapeHtml(row.account)}">
-      <div class="card-top">
-        <div class="name">${escapeHtml(row.name)}</div>
-        <div class="badge ${escapeHtml(row.status)}">${escapeHtml(row.status)}</div>
-      </div>
-      <div class="detail">${escapeHtml(row.account)} · ${escapeHtml(row.city)} · ${money.format(row.amount)}</div>
-      <div class="detail">${escapeHtml(row.product)}</div>
-    </article>
-  `).join("");
+  resultsEl.innerHTML = UI.taskCards(results, "Open Customer 360");
 }
 
 function clearCall() {
@@ -119,37 +103,30 @@ function clearCall() {
 function acknowledgeCall() {
   if (!ringing) return;
   ringing = false;
+  document.body.classList.remove("ringing");
   clearCall();
   emitCallCleared();
 }
 
 function showSearch() {
+  document.body.dataset.view = "search";
+  pageTitle.textContent = DASH_TITLE;
   searchPage.classList.remove("hidden");
   customerPage.classList.add("hidden");
   acknowledgeCall();
-}
-
-function renderCustomer(row) {
-  customerCard.innerHTML = `
-    <div class="card-top">
-      <div class="name">${escapeHtml(row.name)}</div>
-      <div class="badge ${escapeHtml(row.status)}">${escapeHtml(row.status)}</div>
-    </div>
-    <dl class="dl">
-      <dt>Account</dt><dd>${escapeHtml(row.account)}</dd>
-      <dt>City</dt><dd>${escapeHtml(row.city)}</dd>
-      <dt>Product</dt><dd>${escapeHtml(row.product)}</dd>
-      <dt>Amount</dt><dd>${money.format(row.amount)}</dd>
-    </dl>
-  `;
+  clock.endCall();
 }
 
 function openCustomer(row, { incoming } = { incoming: false }) {
+  document.body.dataset.view = "customer";
+  pageTitle.textContent = UI.headline(row);
   searchPage.classList.add("hidden");
   customerPage.classList.remove("hidden");
-  renderCustomer(row);
+  customerCard.innerHTML = UI.customer360(row);
   if (incoming) {
     ringing = true;
+    document.body.classList.add("ringing");
+    clock.startCall();
   } else {
     acknowledgeCall();
   }
@@ -195,9 +172,11 @@ resultsEl.addEventListener("click", (event) => {
   if (row) openCustomer(row, { incoming: false });
 });
 
-backBtn.addEventListener("click", () => {
-  showSearch();
-  render(searchRecords(input.value), input.value);
+document.querySelectorAll('[data-action="dashboard"]').forEach((element) => {
+  element.addEventListener("click", () => {
+    showSearch();
+    render(searchRecords(input.value), input.value);
+  });
 });
 
 async function pollCurrentCall() {
@@ -212,6 +191,7 @@ async function pollCurrentCall() {
       handleIncomingCall(call);
     } else if (!call && ringing) {
       ringing = false;
+      document.body.classList.remove("ringing");
       emitCallCleared();
     }
   } catch {
@@ -236,7 +216,7 @@ fetch("/api/customers")
       render(results, q);
       emitSearchResults(q, results.length, searchId);
     } else {
-      render([], "", APP.id);
+      render([], "");
     }
     emitReady();
     renderStatus();

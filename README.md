@@ -2,6 +2,8 @@
 
 Two technical demonstrations of how operator UIs on **different origins** can share search and incoming-call cues. Each tenant (SGMY, GXB, GXS) is a small Nest app with sample customers.
 
+Every tenant ships the same two mock screens — a **CC dashboard** (find customer + call task list) and a **Customer 360** call screen — laid out like the real collections console, with one accent colour per tenant (SGMY teal, GXB blue, GXS amber).
+
 Hostnames must be distinct origins. `*.localtest.me` already resolves to `127.0.0.1`, so use those URLs (not `localhost`).
 
 ## Start
@@ -27,9 +29,9 @@ Tenants talk through a hidden iframe on `http://proxy.localtest.me:3010/` (`Broa
 | GXB | http://gxb.localtest.me:3002/ | http://gxb.localtest.me:3002/admin |
 | GXS | http://gxs.localtest.me:3003/ | http://gxs.localtest.me:3003/admin |
 
-**Search:** Wait until the header shows **intercom connected**. Search in one tab (e.g. `Singapore`, `overdue`, `TH-20001`). Other tabs run the same query and flash their title if they have hits and are in the background.
+**Search:** Wait until the header shows **intercom connected**. Search in one tab (e.g. `Singapore`, `overdue`, `TH-20001`). Other tabs run the same query into their own call task list and flash their title if they have hits and are in the background.
 
-**Call:** On a tenant’s **Admin** page, pick a customer → **Incoming call**. That tenant’s operator tab opens the customer and flashes until you click or focus it.
+**Call:** On a tenant’s **Admin** page, pick a customer → **Incoming call**. That tenant’s operator tab opens the customer’s Customer 360, switches the rail clock to call duration, and flashes the tab until you click or focus it.
 
 ---
 
