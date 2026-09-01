@@ -122,6 +122,15 @@
     </div>
   </div>
 
+  <div id="remote-call-modal" class="remote-call-modal hidden" role="dialog" aria-modal="true" aria-labelledby="remote-call-title">
+    <div class="remote-call-panel">
+      <h2 id="remote-call-title">Call in progress</h2>
+      <p id="remote-call-tenant"></p>
+      <p id="remote-call-at"></p>
+      <p id="remote-call-ago" class="remote-call-ago"></p>
+      <button type="button" id="remote-call-close">Close</button>
+    </div>
+  </div>
   <iframe id="intercom" style="display:none" title="intercom"></iframe>
   <script>
     const APP = {
@@ -146,6 +155,11 @@
     const customerPage = document.getElementById("customer-page");
     const customerCard = document.getElementById("customer-card");
     const pageTitle = document.getElementById("page-title");
+    const remoteCallModal = document.getElementById("remote-call-modal");
+    const remoteCallTenant = document.getElementById("remote-call-tenant");
+    const remoteCallAt = document.getElementById("remote-call-at");
+    const remoteCallAgo = document.getElementById("remote-call-ago");
+    const remoteCallClose = document.getElementById("remote-call-close");
 
     const DASH_TITLE = "CC dashboard";
     const clock = UI.clock(document.getElementById("clock"));
@@ -157,10 +171,14 @@
     let channelOk = true;
     let hubReady = false;
     let pendingQuery = null;
+    let pendingIncomingCall = null;
     let debounceTimer = null;
     let originalTitle = document.title;
     let flashInterval = null;
     let ringing = false;
+    let dismissedRemoteCallKey = null;
+    let remoteCallTimer = null;
+    let currentRemoteCall = null;
 
     function renderStatus() {
       const label = hubReady ? "intercom connected" : "connecting…";
@@ -174,6 +192,10 @@
       if (ok && pendingQuery !== null) {
         broadcastSearch(pendingQuery);
         pendingQuery = null;
+      }
+      if (ok && pendingIncomingCall) {
+        iframe.contentWindow.postMessage(pendingIncomingCall, HUB_ORIGIN);
+        pendingIncomingCall = null;
       }
     }
 
@@ -191,6 +213,85 @@
         { type: "search", query, from: APP.id },
         HUB_ORIGIN
       );
+    }
+
+    function broadcastIncomingCall(call) {
+      const payload = {
+        type: "incoming-call",
+        from: APP.id,
+        at: String(call.at || new Date().toISOString()),
+        callId: Number(call.id) || 0
+      };
+      if (!hubReady || !iframe.contentWindow) {
+        pendingIncomingCall = payload;
+        return;
+      }
+      iframe.contentWindow.postMessage(payload, HUB_ORIGIN);
+    }
+
+    function remoteCallKey(from, callId) {
+      return `${from}:${callId}`;
+    }
+
+    function formatRemoteAt(iso) {
+      const date = new Date(iso);
+      if (Number.isNaN(date.getTime())) return String(iso || "");
+      return date.toLocaleString();
+    }
+
+    function plural(value, noun) {
+      return `${value} ${noun}${value === 1 ? "" : "s"}`;
+    }
+
+    function formatCallAge(iso) {
+      const date = new Date(iso);
+      if (Number.isNaN(date.getTime())) return "";
+      const secs = Math.max(0, Math.round((Date.now() - date.getTime()) / 1000));
+      if (secs < 60) return `${plural(secs, "second")} ago`;
+      const mins = Math.floor(secs / 60);
+      const rest = secs % 60;
+      if (!rest) return `${plural(mins, "minute")} ago`;
+      return `${plural(mins, "minute")} ${plural(rest, "second")} ago`;
+    }
+
+    function stopRemoteCallTimer() {
+      if (remoteCallTimer) {
+        clearInterval(remoteCallTimer);
+        remoteCallTimer = null;
+      }
+    }
+
+    function hideRemoteCallModal() {
+      remoteCallModal.classList.add("hidden");
+      stopRemoteCallTimer();
+    }
+
+    function showRemoteCallModal(data) {
+      const from = String(data.from || "");
+      const callId = Number(data.callId) || 0;
+      const at = String(data.at || "");
+      if (!from || from === APP.id) return;
+      const key = remoteCallKey(from, callId);
+      if (key === dismissedRemoteCallKey) return;
+
+      currentRemoteCall = { from, callId, at };
+      remoteCallTenant.textContent = `Tenant: ${UI.tenantName(from)}`;
+      remoteCallAt.textContent = `Incoming at ${formatRemoteAt(at)}`;
+      remoteCallAgo.textContent = formatCallAge(at);
+      remoteCallModal.classList.remove("hidden");
+      stopRemoteCallTimer();
+      remoteCallTimer = setInterval(() => {
+        if (!currentRemoteCall) return;
+        remoteCallAgo.textContent = formatCallAge(currentRemoteCall.at);
+      }, 1000);
+    }
+
+    function dismissRemoteCallModal() {
+      if (currentRemoteCall) {
+        dismissedRemoteCallKey = remoteCallKey(currentRemoteCall.from, currentRemoteCall.callId);
+      }
+      currentRemoteCall = null;
+      hideRemoteCallModal();
     }
 
     function searchRecords(query) {
@@ -309,7 +410,9 @@
       const customer = payload && payload.customer;
       if (!customer || !customer.account) return;
       const row = RECORDS.find((item) => item.account === customer.account) || customer;
+      dismissRemoteCallModal();
       openCustomer(row, { incoming: true });
+      broadcastIncomingCall(payload);
     }
 
     window.addEventListener("message", (event) => {
@@ -324,6 +427,10 @@
         if (data.from === APP.id) return;
         input.value = data.query;
         runSearch(data.query, { broadcast: false, from: data.from });
+        return;
+      }
+      if (data.type === "incoming-call") {
+        showRemoteCallModal(data);
       }
     });
 
@@ -343,6 +450,8 @@
 
     window.addEventListener("pointerdown", acknowledgeCall);
     window.addEventListener("keydown", acknowledgeCall);
+
+    remoteCallClose.addEventListener("click", dismissRemoteCallModal);
 
     form.addEventListener("submit", (event) => {
       event.preventDefault();

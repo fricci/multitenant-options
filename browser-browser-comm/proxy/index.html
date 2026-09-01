@@ -33,9 +33,13 @@
     }
   }
 
+  function isBusMessage(data) {
+    return data && (data.type === "search" || data.type === "incoming-call");
+  }
+
   channel.onmessage = (event) => {
     const data = event.data;
-    if (!data || data.type !== "search") return;
+    if (!isBusMessage(data)) return;
     notifyParent(data);
   };
 
@@ -60,6 +64,16 @@
         type: "search",
         query: String(data.query ?? ""),
         from: String(data.from ?? "")
+      });
+      return;
+    }
+
+    if (data.type === "incoming-call") {
+      channel.postMessage({
+        type: "incoming-call",
+        from: String(data.from ?? ""),
+        at: String(data.at ?? ""),
+        callId: Number(data.callId) || 0
       });
     }
   });

@@ -31,7 +31,7 @@ Tenants talk through a hidden iframe on `http://proxy.localtest.me:3010/` (`Broa
 
 **Search:** Wait until the header shows **intercom connected**. Search in one tab (e.g. `Singapore`, `overdue`, `TH-20001`). Other tabs run the same query into their own call task list and flash their title if they have hits and are in the background.
 
-**Call:** On a tenant’s **Admin** page, pick a customer → **Incoming call**. That tenant’s operator tab opens the customer’s Customer 360, switches the rail clock to call duration, and flashes the tab until you click or focus it.
+**Call:** On a tenant’s **Admin** page, pick a customer → **Incoming call**. That tenant’s operator tab opens the customer’s Customer 360, switches the rail clock to call duration, and flashes the tab until you click or focus it. Other operator tabs show a red **call in progress** dialog (tenant name, incoming time, minutes ago). Close it and it stays gone until the next incoming call.
 
 ---
 
