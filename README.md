@@ -29,7 +29,7 @@ Tenants talk through a hidden iframe on `http://proxy.localtest.me:3010/` (`Broa
 | GXB | http://gxb.localtest.me:3002/ | http://gxb.localtest.me:3002/admin |
 | GXS | http://gxs.localtest.me:3003/ | http://gxs.localtest.me:3003/admin |
 
-**Search:** Wait until the header shows **intercom connected**. Search in one tab (e.g. `Singapore`, `overdue`, `TH-20001`). Other tabs run the same query into their own call task list and flash their title if they have hits and are in the background.
+**Search:** Wait until the header shows **intercom connected**. Search in one tab (e.g. `Singapore`, `overdue`, `TH-20001`). The switch above the search box picks the scope. On **All tenants** (the default) the query goes out to the other tabs, which run it into their own call task list, flash their title if they have hits and are in the background, and close any **call in progress** dialog they are showing. On **&lt;tenant&gt; only** the query stays in that tab and nothing changes elsewhere — the tab still follows searches broadcast by other tenants. The choice is remembered per tenant.
 
 **Call:** On a tenant’s **Admin** page, pick a customer → **Incoming call**. That tenant’s operator tab opens the customer’s Customer 360, switches the rail clock to call duration, and flashes the tab until you click or focus it. Other operator tabs show a red **call in progress** dialog (tenant name, incoming time, minutes ago). Close it and it stays gone until the next incoming call.
 

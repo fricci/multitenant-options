@@ -92,7 +92,13 @@
           <section class="card">
             <h2 class="card-title">Find customer</h2>
             <form id="search-form">
-              <label class="field-hint" for="q">Call task ID / Customer's name, ID, city or product</label>
+              <div class="search-head">
+                <label class="field-hint" for="q">Call task ID / Customer's name, ID, city or product</label>
+                <div class="scope-switch" id="scope-switch" role="group" aria-label="Search scope">
+                  <button type="button" class="scope-opt on" data-scope="all" aria-pressed="true">All tenants</button>
+                  <button type="button" class="scope-opt" data-scope="local" aria-pressed="false">This tenant</button>
+                </div>
+              </div>
               <div class="search-row">
                 <input id="q" type="search" autocomplete="off" placeholder="overdue, Singapore, SG-10001…">
                 <button type="submit" class="btn-search">Search</button>
@@ -161,8 +167,10 @@
     const remoteCallAgo = document.getElementById("remote-call-ago");
     const remoteCallClose = document.getElementById("remote-call-close");
     const notificationsButton = document.getElementById("notifications-btn");
+    const scopeSwitch = document.getElementById("scope-switch");
 
     const DASH_TITLE = "CC dashboard";
+    const SCOPE_KEY = `${APP.id}:search-scope`;
     const clock = UI.clock(document.getElementById("clock"));
 
     const POLL_MS = 1000;
@@ -182,6 +190,36 @@
     let currentRemoteCall = null;
     let activeCallNotification = null;
     let notificationStatusTimer = null;
+    let searchScope = readStoredScope();
+
+    function readStoredScope() {
+      try {
+        return localStorage.getItem(SCOPE_KEY) === "local" ? "local" : "all";
+      } catch {
+        return "all";
+      }
+    }
+
+    function renderScopeSwitch() {
+      scopeSwitch.querySelectorAll(".scope-opt").forEach((button) => {
+        const on = button.dataset.scope === searchScope;
+        button.classList.toggle("on", on);
+        button.setAttribute("aria-pressed", String(on));
+      });
+    }
+
+    function setScope(next) {
+      if (next !== "all" && next !== "local") return;
+      if (next === searchScope) return;
+      searchScope = next;
+      try {
+        localStorage.setItem(SCOPE_KEY, next);
+      } catch {
+        /* the switch still works for this tab */
+      }
+      renderScopeSwitch();
+      runSearch(input.value, { broadcast: true, from: APP.id });
+    }
 
     function renderStatus() {
       if (notificationStatusTimer) return;
@@ -316,7 +354,8 @@
       }
 
       const who = from === APP.id ? "You" : UI.tenantName(from);
-      metaEl.textContent = `${who} searched “${trimmed}”`;
+      const scopeNote = from === APP.id && searchScope === "local" ? ` in ${APP.name} only` : "";
+      metaEl.textContent = `${who} searched “${trimmed}”${scopeNote}`;
       countEl.textContent = `Customer call task list (${results.length})`;
 
       if (!results.length) {
@@ -493,7 +532,10 @@
       showSearch();
       const results = searchRecords(query);
       render(results, query, from);
-      if (broadcast) broadcastSearch(query);
+      if (broadcast && searchScope === "all") {
+        broadcastSearch(query);
+        dismissRemoteCallModal();
+      }
       updateFlash(results);
     }
 
@@ -517,6 +559,7 @@
       }
       if (data.type === "search") {
         if (data.from === APP.id) return;
+        dismissRemoteCallModal();
         input.value = data.query;
         runSearch(data.query, { broadcast: false, from: data.from });
         return;
@@ -547,6 +590,13 @@
     remoteCallClose.addEventListener("click", dismissRemoteCallModal);
     notificationsButton.addEventListener("click", enableNotifications);
     updateNotificationButton();
+
+    scopeSwitch.querySelector('[data-scope="local"]').textContent = `${APP.name} only`;
+    scopeSwitch.addEventListener("click", (event) => {
+      const option = event.target.closest(".scope-opt");
+      if (option) setScope(option.dataset.scope);
+    });
+    renderScopeSwitch();
 
     form.addEventListener("submit", (event) => {
       event.preventDefault();
