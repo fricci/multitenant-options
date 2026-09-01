@@ -42,7 +42,7 @@
         <svg class="ic"><use href="#i-list"></use></svg>
       </button>
       <div class="rail-sep"></div>
-      <button type="button" class="rail-btn" title="Notifications">
+      <button type="button" id="notifications-btn" class="rail-btn" title="Enable incoming call notifications" aria-label="Enable incoming call notifications" aria-pressed="false">
         <svg class="ic"><use href="#i-bell"></use></svg>
       </button>
       <div class="rail-user">
@@ -143,7 +143,7 @@
   </script>
   <script src="/ui.js"></script>
   <script>
-    const HUB_ORIGIN = "http://proxy.localtest.me:3010";
+    const HUB_ORIGIN = "http://proxy.localhost:3010";
     const iframe = document.getElementById("intercom");
     const input = document.getElementById("q");
     const resultsEl = document.getElementById("results");
@@ -160,6 +160,7 @@
     const remoteCallAt = document.getElementById("remote-call-at");
     const remoteCallAgo = document.getElementById("remote-call-ago");
     const remoteCallClose = document.getElementById("remote-call-close");
+    const notificationsButton = document.getElementById("notifications-btn");
 
     const DASH_TITLE = "CC dashboard";
     const clock = UI.clock(document.getElementById("clock"));
@@ -179,8 +180,11 @@
     let dismissedRemoteCallKey = null;
     let remoteCallTimer = null;
     let currentRemoteCall = null;
+    let activeCallNotification = null;
+    let notificationStatusTimer = null;
 
     function renderStatus() {
+      if (notificationStatusTimer) return;
       const label = hubReady ? "intercom connected" : "connecting…";
       statusEl.textContent = channelOk ? label : `${label} · call channel offline`;
       statusEl.classList.toggle("ok", hubReady && channelOk);
@@ -327,6 +331,92 @@
       return document.hidden || !document.hasFocus();
     }
 
+    function updateNotificationButton() {
+      const supported = "Notification" in window;
+      const permission = supported ? Notification.permission : "unsupported";
+      const enabled = permission === "granted";
+      let label = "Enable incoming call notifications";
+      if (!supported) label = "Native notifications are not supported";
+      else if (enabled) label = "Incoming call notifications enabled";
+      else if (permission === "denied") {
+        label = window.isSecureContext
+          ? "Incoming call notifications are blocked in browser settings"
+          : "Incoming call notifications need a secure context — open this tenant on its .localhost URL";
+      }
+      notificationsButton.title = label;
+      notificationsButton.setAttribute("aria-label", label);
+      notificationsButton.setAttribute("aria-pressed", String(enabled));
+      notificationsButton.classList.toggle("on", enabled);
+    }
+
+    function flashNotificationStatus(message) {
+      clearTimeout(notificationStatusTimer);
+      statusEl.textContent = message;
+      statusEl.classList.remove("ok");
+      notificationStatusTimer = setTimeout(() => {
+        notificationStatusTimer = null;
+        renderStatus();
+      }, 5000);
+    }
+
+    async function enableNotifications() {
+      if (!("Notification" in window)) {
+        flashNotificationStatus(
+          window.isSecureContext
+            ? "notifications unsupported in this browser"
+            : "notifications need a secure context (use the *.localhost URLs)"
+        );
+        return;
+      }
+      let permission = Notification.permission;
+      if (permission !== "granted") {
+        try {
+          permission = await Notification.requestPermission();
+        } catch {
+          permission = Notification.permission;
+        }
+      }
+      updateNotificationButton();
+      if (permission === "granted") flashNotificationStatus("call notifications on");
+      else if (permission === "denied") {
+        flashNotificationStatus(
+          window.isSecureContext
+            ? "call notifications blocked · allow them in browser and OS settings"
+            : "call notifications need a secure context · open http://gxs.localhost:3003/"
+        );
+      }
+      else flashNotificationStatus("notification prompt dismissed");
+    }
+
+    function closeIncomingCallNotification() {
+      if (!activeCallNotification) return;
+      activeCallNotification.close();
+      activeCallNotification = null;
+    }
+
+    function notifyIncomingCall(call, row) {
+      if (!isUnfocused() || !("Notification" in window) || Notification.permission !== "granted") return;
+      closeIncomingCallNotification();
+      const account = String(row.account || "");
+      try {
+        const notification = new Notification(`Incoming call · ${APP.name}`, {
+          body: account ? `${row.name} · ${account}` : String(row.name || "Unknown customer"),
+          tag: `${APP.id}-incoming-call-${Number(call.id) || 0}`
+        });
+        activeCallNotification = notification;
+        notification.onclick = () => {
+          window.focus();
+          notification.close();
+          if (activeCallNotification === notification) activeCallNotification = null;
+        };
+        notification.onclose = () => {
+          if (activeCallNotification === notification) activeCallNotification = null;
+        };
+      } catch {
+        /* keep the in-page incoming-call alert as the fallback */
+      }
+    }
+
     function startFlashing(frames) {
       stopFlashing();
       let frame = 0;
@@ -373,6 +463,7 @@
       ringing = false;
       document.body.classList.remove("ringing");
       stopFlashing();
+      closeIncomingCallNotification();
       clearCall();
     }
 
@@ -412,6 +503,7 @@
       const row = RECORDS.find((item) => item.account === customer.account) || customer;
       dismissRemoteCallModal();
       openCustomer(row, { incoming: true });
+      notifyIncomingCall(payload, row);
       broadcastIncomingCall(payload);
     }
 
@@ -444,6 +536,7 @@
     });
 
     window.addEventListener("focus", () => {
+      updateNotificationButton();
       if (ringing) acknowledgeCall();
       else stopFlashing();
     });
@@ -452,6 +545,8 @@
     window.addEventListener("keydown", acknowledgeCall);
 
     remoteCallClose.addEventListener("click", dismissRemoteCallModal);
+    notificationsButton.addEventListener("click", enableNotifications);
+    updateNotificationButton();
 
     form.addEventListener("submit", (event) => {
       event.preventDefault();
@@ -494,6 +589,7 @@
           ringing = false;
           document.body.classList.remove("ringing");
           stopFlashing();
+          closeIncomingCallNotification();
         }
       } catch {
         channelOk = false;
