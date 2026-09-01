@@ -143,7 +143,7 @@
   </script>
   <script src="/ui.js"></script>
   <script>
-    const HUB_ORIGIN = "http://proxy.localhost:3010";
+    const HUB_ORIGIN = "http://proxy.localtest.me:3010";
     const iframe = document.getElementById("intercom");
     const input = document.getElementById("q");
     const resultsEl = document.getElementById("results");
@@ -341,7 +341,7 @@
       else if (permission === "denied") {
         label = window.isSecureContext
           ? "Incoming call notifications are blocked in browser settings"
-          : "Incoming call notifications need a secure context — open this tenant on its .localhost URL";
+          : "Incoming call notifications need a secure context — see the README for the Chrome insecure-origin flag";
       }
       notificationsButton.title = label;
       notificationsButton.setAttribute("aria-label", label);
@@ -364,7 +364,7 @@
         flashNotificationStatus(
           window.isSecureContext
             ? "notifications unsupported in this browser"
-            : "notifications need a secure context (use the *.localhost URLs)"
+            : "notifications need a secure context · see README for the Chrome flag"
         );
         return;
       }
@@ -382,7 +382,7 @@
         flashNotificationStatus(
           window.isSecureContext
             ? "call notifications blocked · allow them in browser and OS settings"
-            : "call notifications need a secure context · open http://sgmy.localhost:3001/"
+            : "call notifications need a secure context · see README for the Chrome flag"
         );
       }
       else flashNotificationStatus("notification prompt dismissed");

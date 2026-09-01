@@ -31,10 +31,10 @@ pids+=($!)
 python3 -m http.server 3010 --bind 127.0.0.1 --directory "$ROOT/proxy" &
 pids+=($!)
 
-echo "SGMY   http://sgmy.localhost:3001/   admin  http://sgmy.localhost:3001/admin"
-echo "GXB    http://gxb.localhost:3002/    admin  http://gxb.localhost:3002/admin"
-echo "GXS    http://gxs.localhost:3003/    admin  http://gxs.localhost:3003/admin"
-echo "hub    http://proxy.localhost:3010/"
+echo "SGMY   http://sgmy.localtest.me:3001/   admin  http://sgmy.localtest.me:3001/admin"
+echo "GXB    http://gxb.localtest.me:3002/    admin  http://gxb.localtest.me:3002/admin"
+echo "GXS    http://gxs.localtest.me:3003/    admin  http://gxs.localtest.me:3003/admin"
+echo "hub    http://proxy.localtest.me:3010/"
 echo "Ctrl+C to stop"
 
 wait

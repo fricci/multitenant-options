@@ -8,12 +8,10 @@
 <script>
   const channel = new BroadcastChannel("tenant-intercom");
 
-  const ALLOWED_HOSTS = ["localhost", "localtest.me"];
-
   function isAllowedOrigin(origin) {
     try {
       const host = new URL(origin).hostname;
-      return ALLOWED_HOSTS.some((base) => host === base || host.endsWith(`.${base}`));
+      return host === "localtest.me" || host.endsWith(".localtest.me");
     } catch {
       return false;
     }
